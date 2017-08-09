@@ -1,0 +1,100 @@
+---
+- hosts: masters
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: Update repositories cache
+      apt:
+        update_cache: yes
+    - name: Install all the dependencies
+      apt: name={{item}} state=installed
+      with_items:
+           - python-pip
+           - tar
+           - wget
+           - git
+           - openjdk-8-jdk
+           - autoconf
+           - libtool
+           - build-essential
+           - python-dev 
+           - python-six
+           - libcurl4-nss-dev
+           - libsasl2-dev
+           - libsasl2-modules
+           - maven
+           - libapr1-dev
+           - libsvn-dev
+           - zlib1g-dev
+
+- hosts: agents
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: Update repositories cache
+      apt:
+        update_cache: yes
+    - name: Install all the dependencies
+      apt: name={{item}} state=installed
+      with_items:
+           - python-pip
+           - tar
+           - wget
+           - git
+           - openjdk-8-jdk
+           - autoconf
+           - libtool
+           - build-essential
+           - python-dev
+           - python-six
+           - libcurl4-nss-dev
+           - libsasl2-dev
+           - libsasl2-modules
+           - maven
+           - libapr1-dev
+           - libsvn-dev
+           - zlib1g-dev
+
+- hosts: all
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: Download and Install the mesos package
+      get_url:
+        url: https://s3.eu-west-2.amazonaws.com/jenkins-jvm-artifacts/mesos.tar.gz
+        dest: /opt/
+    - name: Download and Install the spark package
+      get_url:
+        url: https://s3.eu-west-2.amazonaws.com/jenkins-jvm-artifacts/spark-2.2.0-bin-hadoop2.7.tgz
+        dest: /opt/
+    - name: Unarchive spark package to /opt/
+      unarchive:
+        src: /tmp/spark-2.2.0-bin-hadoop2.7.tgz
+        dest: /opt/tmp/
+        remote_src: yes
+    - name: Unarchive mesos package to /opt/
+      unarchive:
+        src: /tmp/mesos.tar.gz
+        dest: /opt/tmp/
+        remote_src: yes
+
+- hosts: master 
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: Run the mesos master as a daemon 
+      apt:
+        update_cache: yes
+
+- hosts: agents
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: Run the mesos agent as a daemon
+      apt:
+        update_cache: yes
