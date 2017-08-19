@@ -1,5 +1,16 @@
 ---
-- hosts: masters
+- hosts: all
+  gather_facts: False 
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: apt-get update 
+      raw: apt-get update -qq 
+    - name: Install python 2.7 
+      raw: apt-get install -qq python2.7 
+
+- hosts: all
   remote_user: ubuntu
   become: yes
   become_method: sudo
@@ -10,6 +21,7 @@
     - name: Install all the dependencies
       apt: name={{item}} state=installed
       with_items:
+           - python
            - python-pip
            - tar
            - wget
@@ -27,68 +39,77 @@
            - libapr1-dev
            - libsvn-dev
            - zlib1g-dev
-
-- hosts: agents
-  remote_user: ubuntu
-  become: yes
-  become_method: sudo
-  tasks:
-    - name: Update repositories cache
-      apt:
-        update_cache: yes
-    - name: Install all the dependencies
-      apt: name={{item}} state=installed
-      with_items:
-           - python-pip
-           - tar
-           - wget
-           - git
-           - openjdk-8-jdk
-           - autoconf
-           - libtool
-           - build-essential
-           - python-dev
-           - python-six
-           - libcurl4-nss-dev
-           - libsasl2-dev
-           - libsasl2-modules
-           - maven
-           - libapr1-dev
-           - libsvn-dev
-           - zlib1g-dev
+           - daemon
 
 - hosts: all
   remote_user: ubuntu
   become: yes
   become_method: sudo
   tasks:
-    - name: Download and Install the mesos package
+    - name: Download the mesos package
       get_url:
         url: https://s3.eu-west-2.amazonaws.com/jenkins-jvm-artifacts/mesos.tar.gz
         dest: /opt/
-    - name: Download and Install the spark package
+    - name: Download the spark package
       get_url:
         url: https://s3.eu-west-2.amazonaws.com/jenkins-jvm-artifacts/spark-2.2.0-bin-hadoop2.7.tgz
         dest: /opt/
+
     - name: Unarchive spark package to /opt/
       unarchive:
-        src: /tmp/spark-2.2.0-bin-hadoop2.7.tgz
-        dest: /opt/tmp/
+        src: /opt/spark-2.2.0-bin-hadoop2.7.tgz
+        dest: /opt/
         remote_src: yes
+        copy: no
     - name: Unarchive mesos package to /opt/
       unarchive:
-        src: /tmp/mesos.tar.gz
-        dest: /opt/tmp/
+        src: /opt/mesos.tar.gz
+        dest: /opt/
         remote_src: yes
+        copy: no
+    - name: make un-install mesos first just in case
+      command: chdir=/opt/mesos/build/ make uninstall
+      ignore_errors: True
+    - name: make install mesos
+      command: chdir=/opt/mesos/build/ make install
+    - name: copy the standard spark configuration (spark-env.sh)
+      copy:
+        src: /Users/traianow/Ansible/mesos-spark-deployer/files/spark-env.sh
+        dest: /opt/spark-2.2.0-bin-hadoop2.7/conf
+        mode: u=rwx,g=rx,o=rx
+    - name: copy the master address file to /tmp/ so the startup scripts can get at it
+      copy:  
+        src: /Users/traianow/Ansible/mesos-spark-deployer/files/master.ip
+        dest: /tmp/
+        mode: u=rw,g=r,o=r
+    - name: copy the dispatcher start script to /opt/
+      copy:  
+        src: /Users/traianow/Ansible/mesos-spark-deployer/files/dispatcher.sh
+        dest: /opt/
+        mode: u=rwx,g=rx,o=rx
+    - name: copy the master startup script to /opt/
+      copy:  
+        src: /Users/traianow/Ansible/mesos-spark-deployer/files/mesos-master.sh
+        dest: /opt/
+        mode: u=rwx,g=rx,o=rx
+    - name: copy the agent startup script to /opt/
+      copy:  
+        src: /Users/traianow/Ansible/mesos-spark-deployer/files/mesos-agent.sh
+        dest: /opt/
+        mode: u=rwx,g=rx,o=rx
+    - name: copy the sparkpi benchmark script to /opt/
+      copy:  
+        src: /Users/traianow/Ansible/mesos-spark-deployer/files/sparkpi_submit.sh
+        dest: /opt/
+        mode: u=rwx,g=rx,o=rx
 
-- hosts: master 
+- hosts: masters
   remote_user: ubuntu
   become: yes
   become_method: sudo
   tasks:
-    - name: Run the mesos master as a daemon 
-      apt:
-        update_cache: yes
+    - name: Run the mesos master as a daemon
+      command: /opt/mesos-master.sh
 
 - hosts: agents
   remote_user: ubuntu
@@ -96,5 +117,20 @@
   become_method: sudo
   tasks:
     - name: Run the mesos agent as a daemon
-      apt:
-        update_cache: yes
+      command: /opt/mesos-agent.sh
+
+- hosts: all
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: Start the spark mesos dispatcher
+      command: /opt/dispatcher.sh
+
+- hosts: masters
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: run the test sparkPI job
+      command: /opt/sparkpi_submit.sh

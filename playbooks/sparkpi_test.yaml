@@ -1,0 +1,7 @@
+- hosts: masters
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: run the test sparkPI job
+      shell: /opt/sparkpi_submit.sh

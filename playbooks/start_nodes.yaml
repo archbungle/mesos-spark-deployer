@@ -1,0 +1,23 @@
+- hosts: masters
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: Run the mesos master as a daemon
+      shell: daemon -- /opt/mesos-master.sh
+
+- hosts: agents
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: Run the mesos agent as a daemon
+      shell: daemon -- /opt/mesos-agent.sh
+
+- hosts: masters
+  remote_user: ubuntu
+  become: yes
+  become_method: sudo
+  tasks:
+    - name: run the test sparkPI job
+      command: /opt/sparkpi_submit.sh

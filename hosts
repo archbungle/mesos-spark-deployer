@@ -1,0 +1,10 @@
+[masters]
+52.221.223.175
+
+[agents]
+54.169.14.39
+54.169.119.48
+
+[all:vars]
+ansible_python_interpreter=/usr/bin/python2.7
+
