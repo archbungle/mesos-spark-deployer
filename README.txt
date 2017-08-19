@@ -33,12 +33,13 @@ The script deploy.sh ties together 4 phases of the deployment in the following s
 3) Run Ansible playbook to deploy the mesos master and agents, and the sparkPI benchmarck example
 4) Run SSHuttle to create a convenient VPN for the user to connect to the mesos master UI and agent UIs
 
-Notes:
-=====
+ToDo
+====
 
- - I'll shortly remove the perl and bash involved, just having Terraform call Ansible
- - I'll rewrite the ansible to make better use of variables in the playbooks
+ - Remove the perl and bash involved, just having Terraform call Ansible
+ - Rewrite the ansible to make better use of variables in the playbooks
  - Create better init scripts for mesos
- - create better init scripts for spark
+ - Create better init scripts for spark
  - Simplify initial configuration for the user
+ - Fix the markdown in this readme :-)
  
