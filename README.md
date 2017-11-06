@@ -30,7 +30,7 @@ The script deploy.sh ties together 4 phases of the deployment in the following s
 
 	- yes I know this can be done with terraform  features. I'll add this when I have time :-)
 
-3) Run Ansible playbook to deploy the mesos master and agents, and the sparkPI benchmarck example
+3) Run Ansible playbook to deploy the mesos master and agents, and the sparkPI benchmark example
 4) Run SSHuttle to create a convenient VPN for the user to connect to the mesos master UI and agent UIs
 
 ToDo
